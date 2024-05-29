@@ -1,0 +1,26 @@
+{
+  "manifest_version": 3,
+  "name": "Remove Japanese History in YouTube",
+  "version": "1.0",
+  "permissions": [
+    "tabs",
+    "scripting",
+    "activeTab",
+    "https://myactivity.google.com/*",
+    "https://www.youtube.com/*"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {},
+  "content_scripts": [
+    {
+      "matches": ["https://myactivity.google.com/product/youtube?hl=en&utm_medium=web&utm_source=youtube"],
+      "js": ["removeHistoryInActivity.js"]
+    },
+    {
+      "matches": ["https://www.youtube.com/feed/history"],
+      "js": ["removeHistoryInFeed.js"]
+    }
+  ]
+}
