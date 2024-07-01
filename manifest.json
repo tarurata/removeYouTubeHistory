@@ -5,7 +5,9 @@
   "permissions": [
     "tabs",
     "scripting",
-    "activeTab",
+    "activeTab"
+  ],
+  "host_permissions": [
     "https://myactivity.google.com/*",
     "https://www.youtube.com/*"
   ],
