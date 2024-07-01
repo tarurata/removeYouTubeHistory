@@ -19,13 +19,13 @@ searchHistoryElements.forEach(element => {
         return;
     }
 
-    console.log(`Found Japanese search: ${linkText}`);
+    console.log(`Found Japanese search: ${videoText}`);
     let removeButton = element.querySelector("button");
 
     if (removeButton) {
         removeButton.click();
-        console.log(`${linkText} Removed!`);
+        console.log(`${videoText} Removed!`);
     } else {
-        console.log(`${linkText} couldn't be removed...`);
+        console.log(`${videoText} couldn't be removed...`);
     }
 });
