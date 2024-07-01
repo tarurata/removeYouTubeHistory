@@ -9,7 +9,8 @@ videos.forEach(video => {
     }
 
     let title = titleElement.textContent;
-    if (!japaneseRegex.test(title)) {
+    let videoText = video.textContent;
+    if (!japaneseRegex.test(videoText)) {
         console.log("Could not find Japanese video...");
         return;
     }

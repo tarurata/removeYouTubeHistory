@@ -12,9 +12,9 @@ searchHistoryElements.forEach(element => {
         return;
     }
 
-    let linkText = linkElement.textContent;
+    let videoText = element.textContent;
     // Check if the text contains Japanese characters
-    if (!japaneseRegex.test(linkText)) {
+    if (!japaneseRegex.test(videoText)) {
         console.log("Could not find Japanese...");
         return;
     }
