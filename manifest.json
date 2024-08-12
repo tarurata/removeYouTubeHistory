@@ -9,7 +9,6 @@
   ],
   "host_permissions": [
     "https://myactivity.google.com/*",
-    "https://www.youtube.com/*"
   ],
   "icons": {
     "48": "icon.png",
@@ -21,12 +20,8 @@
   "action": {},
   "content_scripts": [
     {
-      "matches": ["https://myactivity.google.com/product/youtube?hl=en&utm_medium=web&utm_source=youtube"],
+      "matches": ["https://myactivity.google.com/product/youtube"],
       "js": ["removeHistoryInActivity.js"]
-    },
-    {
-      "matches": ["https://www.youtube.com/feed/history"],
-      "js": ["removeHistoryInFeed.js"]
     }
   ]
 }
