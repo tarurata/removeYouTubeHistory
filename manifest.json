@@ -8,7 +8,7 @@
     "activeTab"
   ],
   "host_permissions": [
-    "https://myactivity.google.com/*",
+    "https://myactivity.google.com/*"
   ],
   "icons": {
     "48": "icon.png",

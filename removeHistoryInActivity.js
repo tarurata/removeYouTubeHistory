@@ -1,3 +1,5 @@
+// TODO May be able to remove directly click the button from aria-label="Delete activity item 中東戦争になるかもねー。アサヒマルエフを呑みながら 2024/08/03 S20"
+// TODO Auto scroll to show the old history
 // URL: https://myactivity.google.com/product/youtube
 function removeJapaneseSearchHistory() {
     let activityCards = document.querySelectorAll("c-wiz");

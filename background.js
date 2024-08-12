@@ -1,6 +1,6 @@
 chrome.action.onClicked.addListener((tab) => {
   const urlsToOpen = [
-    "https://myactivity.google.com/product/youtube",
+    "https://myactivity.google.com/product/youtube"
   ];
 
   urlsToOpen.forEach((url) => {
