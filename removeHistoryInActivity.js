@@ -3,6 +3,7 @@
 // URL: https://myactivity.google.com/product/youtube
 function removeJapaneseSearchHistory() {
     let activityCards = document.querySelectorAll("c-wiz");
+
     let japaneseRegex = /[\u3000-\u303F\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FBF]/;
 
     activityCards.forEach(element => {
