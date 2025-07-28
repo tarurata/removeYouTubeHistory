@@ -10,7 +10,6 @@ YouTube's recommendation algorithm uses your watch history to suggest new videos
 
 - **Customizable Detection**: Identifies content using user-defined regex patterns
 - **Auto-Scrolling**: Automatically scrolls through your entire YouTube history to load more content
-- **Background Operation**: Continues working even when tabs are in the background
 - **Dual Platform Support**: Works on both YouTube Activity page and YouTube Feed History
 - **Safety Mechanisms**: Prevents infinite scrolling and includes error handling
 - **Real-time Removal**: Removes matching content as it's discovered
@@ -131,35 +130,6 @@ removeYouTubeHistory/
 - **Memory Management**: Efficient cleanup of event listeners
 - **Regex Validation**: Real-time validation of regex patterns
 
-## 🔍 Troubleshooting
-
-### Extension Not Working
-1. **Check Console**: Open DevTools (F12) and look for error messages
-2. **Refresh Pages**: Try refreshing the YouTube history pages
-3. **Reinstall Extension**: Remove and reload the extension
-4. **Check Permissions**: Ensure the extension has access to YouTube domains
-
-### No Matching Content Found
-- The extension only removes content that matches your regex pattern
-- Check if your history actually contains content matching your pattern
-- The extension logs all found content in the console
-
-### Slow Performance
-- The extension processes content in batches to avoid overwhelming the page
-- Large history may take time to process completely
-- You can leave it running in the background
-
-## 🤝 Contributing
-
-Contributions are welcome! Please feel free to submit a Pull Request.
-
-### Development Setup
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Test thoroughly
-5. Submit a pull request
-
 ## 📄 License
 
 This project is open source and available under the [MIT License](LICENSE).
@@ -167,13 +137,6 @@ This project is open source and available under the [MIT License](LICENSE).
 ## ⚠️ Disclaimer
 
 This extension is for personal use to manage your own YouTube history. Please use responsibly and in accordance with YouTube's Terms of Service. The extension only removes content from your own history and does not affect other users.
-
-## 🆘 Support
-
-If you encounter any issues or have questions:
-1. Check the troubleshooting section above
-2. Look at the browser console for error messages
-3. Open an issue on GitHub with detailed information about the problem
 
 ---
 
