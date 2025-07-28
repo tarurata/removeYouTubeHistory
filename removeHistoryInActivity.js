@@ -87,14 +87,14 @@ function scrollToBottom() {
     });
 }
 
-function removeJapaneseSearchHistory() {
+function removeMatchingSearchHistory() {
     let activityCards = document.querySelectorAll("c-wiz");
-    let japaneseRegex;
+    let contentRegex;
 
     try {
         // Create regex from config pattern (remove / / delimiters)
         const pattern = config.regexPattern.slice(1, -1);
-        japaneseRegex = new RegExp(pattern);
+        contentRegex = new RegExp(pattern);
     } catch (error) {
         log(`Invalid regex pattern: ${error.message}`, 'normal');
         return 0;
@@ -108,13 +108,13 @@ function removeJapaneseSearchHistory() {
         if (!element.firstElementChild.getAttribute("aria-label").includes("Card showing an activity from YouTube")) { return; }
 
         let videoText = element.textContent;
-        // Check if the text contains Japanese characters
-        if (!japaneseRegex.test(videoText)) {
-            log("Could not find Japanese...", 'detailed');
+        // Check if the text matches the regex pattern
+        if (!contentRegex.test(videoText)) {
+            log("Could not find matching content...", 'detailed');
             return;
         }
 
-        log(`Found Japanese search: ${videoText}`, 'normal');
+        log(`Found matching search: ${videoText}`, 'normal');
 
         let removeButton = element.querySelector("button");
 
@@ -164,9 +164,9 @@ async function autoScrollAndRemove() {
     isScrolling = true;
 
     try {
-        // First, try to remove any Japanese history from current view
-        log("Checking current view for Japanese history...", 'normal');
-        const removedCount = removeJapaneseSearchHistory();
+        // First, try to remove any matching history from current view
+        log("Checking current view for matching history...", 'normal');
+        const removedCount = removeMatchingSearchHistory();
 
         if (removedCount > 0) {
             log(`Removed ${removedCount} items from current view`, 'normal');
@@ -190,8 +190,8 @@ async function autoScrollAndRemove() {
         await new Promise(resolve => setTimeout(resolve, 2000));
 
         // Try to remove history from newly loaded content
-        log("Checking newly loaded content for Japanese history...", 'normal');
-        const newRemovedCount = removeJapaneseSearchHistory();
+        log("Checking newly loaded content for matching history...", 'normal');
+        const newRemovedCount = removeMatchingSearchHistory();
 
         if (newRemovedCount > 0) {
             log(`Removed ${newRemovedCount} items from newly loaded content`, 'normal');
@@ -210,7 +210,7 @@ async function startRemoval() {
 
     if (config.behavior.autoStart) {
         isRunning = true;
-        log("Starting automatic Japanese history removal...", 'normal');
+        log("Starting automatic history removal...", 'normal');
         setInterval(autoScrollAndRemove, config.safety.scrollInterval);
         autoScrollAndRemove(); // Initial run
     } else {

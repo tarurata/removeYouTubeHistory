@@ -85,14 +85,14 @@ function scrollToBottom() {
     });
 }
 
-function removeJapaneseVideoHistory() {
+function removeMatchingVideoHistory() {
     let videos = document.querySelectorAll("ytd-video-renderer");
-    let japaneseRegex;
+    let contentRegex;
 
     try {
         // Create regex from config pattern (remove / / delimiters)
         const pattern = config.regexPattern.slice(1, -1);
-        japaneseRegex = new RegExp(pattern);
+        contentRegex = new RegExp(pattern);
     } catch (error) {
         log(`Invalid regex pattern: ${error.message}`, 'normal');
         return 0;
@@ -109,18 +109,18 @@ function removeJapaneseVideoHistory() {
 
         let title = titleElement.textContent;
         let videoText = video.textContent;
-        if (!japaneseRegex.test(videoText)) {
-            log("Could not find Japanese video...", 'detailed');
+        if (!contentRegex.test(videoText)) {
+            log("Could not find matching video...", 'detailed');
             return;
         }
 
-        log(`Found Japanese video: ${title}`, 'normal');
+        log(`Found matching video: ${title}`, 'normal');
 
         let removeButton = video.querySelector(".yt-spec-touch-feedback-shape__fill");
 
         if (removeButton) {
             removeButton.click();
-            log(`Removed Japanese video: ${title}`, 'normal');
+            log(`Removed matching video: ${title}`, 'normal');
             removedCount++;
 
             // Pause between removals
@@ -144,9 +144,9 @@ async function autoScrollAndRemove() {
     isScrolling = true;
 
     try {
-        // First, try to remove any Japanese videos from current view
-        log("Checking current view for Japanese videos...", 'normal');
-        const removedCount = removeJapaneseVideoHistory();
+        // First, try to remove any matching videos from current view
+        log("Checking current view for matching videos...", 'normal');
+        const removedCount = removeMatchingVideoHistory();
 
         if (removedCount > 0) {
             log(`Removed ${removedCount} videos from current view`, 'normal');
@@ -170,8 +170,8 @@ async function autoScrollAndRemove() {
         await new Promise(resolve => setTimeout(resolve, 2000));
 
         // Try to remove videos from newly loaded content
-        log("Checking newly loaded content for Japanese videos...", 'normal');
-        const newRemovedCount = removeJapaneseVideoHistory();
+        log("Checking newly loaded content for matching videos...", 'normal');
+        const newRemovedCount = removeMatchingVideoHistory();
 
         if (newRemovedCount > 0) {
             log(`Removed ${newRemovedCount} videos from newly loaded content`, 'normal');
@@ -190,7 +190,7 @@ async function startRemoval() {
 
     if (config.behavior.autoStart) {
         isRunning = true;
-        log("Starting automatic Japanese video removal...", 'normal');
+        log("Starting automatic video removal...", 'normal');
         setInterval(autoScrollAndRemove, config.safety.scrollInterval);
         autoScrollAndRemove(); // Initial run
     } else {

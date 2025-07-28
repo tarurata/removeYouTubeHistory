@@ -22,7 +22,7 @@ const DEFAULT_CONFIG = {
 
 // Preset regex patterns
 const PRESET_PATTERNS = {
-    japanese: '/[\\u3000-\\u303F\\u3040-\\u309F\\u30A0-\\u30FF\\u4E00-\\u9FBF]/',
+    japanese: '/[\\u3000-\\u303F\\u3040-\\u309F\\u30A0-\\u30FF\\u4E00-\\u9FBF]/'
 };
 
 // Initialize the configuration page

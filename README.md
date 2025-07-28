@@ -1,17 +1,20 @@
-# Remove Japanese History in YouTube
+# Remove History in YouTube
 
-A Chrome extension that automatically removes Japanese content from your YouTube watch history to prevent YouTube from recommending Japanese videos based on your viewing history.
+A Chrome extension that automatically removes content from your YouTube watch history based on customizable regex patterns to prevent YouTube from recommending unwanted videos based on your viewing history.
 
 ## 🎯 Purpose
 
-YouTube's recommendation algorithm uses your watch history to suggest new videos. If you've watched Japanese content in the past, YouTube will continue recommending Japanese videos even if you no longer want to see them. This extension helps you clean up your YouTube history by automatically removing Japanese content.
+YouTube's recommendation algorithm uses your watch history to suggest new videos. If you've watched content in the past that you no longer want to see, YouTube will continue recommending similar videos. This extension helps you clean up your YouTube history by automatically removing content that matches your custom patterns.
 
 ## ✨ Features
 
-- **Automatic Detection**: Identifies Japanese content using Unicode character detection with Regex
+- **Customizable Detection**: Identifies content using user-defined regex patterns
 - **Auto-Scrolling**: Automatically scrolls through your entire YouTube history to load more content
+- **Background Operation**: Continues working even when tabs are in the background
 - **Dual Platform Support**: Works on both YouTube Activity page and YouTube Feed History
-- **Real-time Removal**: Removes Japanese content as it's discovered
+- **Safety Mechanisms**: Prevents infinite scrolling and includes error handling
+- **Real-time Removal**: Removes matching content as it's discovered
+- **Web Configuration**: Easy-to-use web interface for all settings
 
 ## 🚀 Installation
 
@@ -38,22 +41,29 @@ YouTube's recommendation algorithm uses your watch history to suggest new videos
 
 ## 📖 How to Use
 
-### Step 1: Open the Extension
+### Step 1: Configure the Extension
 - Click the extension icon in your Chrome toolbar
+- This will open the configuration page
+- Set your desired regex pattern for content detection
+- Configure safety settings and behavior options
+- Click "Save Configuration"
+
+### Step 2: Open History Pages
+- Right-click the extension icon and select "Open YouTube History Pages"
 - This will automatically open two tabs:
   - YouTube Activity page (`https://myactivity.google.com/product/youtube`)
   - YouTube Feed History page (`https://www.youtube.com/feed/history`)
 
-### Step 2: Let It Run
-- The extension will automatically start scanning for Japanese content
+### Step 3: Let It Run
+- The extension will automatically start scanning for matching content
 - It will scroll through your history to load more content
-- Japanese videos and search history will be automatically removed
+- Matching videos and search history will be automatically removed
 - You can minimize the tabs or switch to other tabs - it works in the background
 
-### Step 3: Monitor Progress
+### Step 4: Monitor Progress
 - Check the browser console (F12) to see the removal progress
 - The extension will log:
-  - Found Japanese content
+  - Found matching content
   - Successful removals
   - Scroll progress
   - Any errors encountered
@@ -61,11 +71,10 @@ YouTube's recommendation algorithm uses your watch history to suggest new videos
 ## 🔧 How It Works
 
 ### Content Detection
-The extension uses Unicode character detection to identify Japanese content:
-- **Hiragana**: `\u3040-\u309F`
-- **Katakana**: `\u30A0-\u30FF`
-- **Kanji**: `\u4E00-\u9FBF`
-- **Japanese Punctuation**: `\u3000-\u303F`
+The extension uses customizable regex patterns to identify content:
+- **Default Pattern**: Detects Hiragana, Katakana, Kanji, and Japanese punctuation
+- **Custom Patterns**: You can define any regex pattern to match your desired content
+- **Real-time Validation**: Regex patterns are validated as you type
 
 ### Automatic Scrolling
 - Scrolls to the bottom of the page to load more content
@@ -74,7 +83,7 @@ The extension uses Unicode character detection to identify Japanese content:
 - Includes safety mechanisms to prevent infinite scrolling
 
 ### Removal Process
-1. **Scan**: Identifies YouTube activity cards with Japanese content
+1. **Scan**: Identifies YouTube activity cards with matching content
 2. **Click**: Automatically clicks the delete button for each item
 3. **Confirm**: Waits for deletion confirmation
 4. **Continue**: Moves to the next item
@@ -87,21 +96,69 @@ removeYouTubeHistory/
 ├── background.js              # Background script (opens tabs)
 ├── removeHistoryInActivity.js # Removes from YouTube Activity page
 ├── removeHistoryInFeed.js     # Removes from YouTube Feed History
+├── config.html                # Configuration web interface
+├── config.js                  # Configuration management
 ├── icon.png                   # Extension icon
 └── README.md                  # This file
 ```
 
 ## ⚙️ Configuration
 
+### Content Detection
+- **Regex Pattern**: Customizable pattern for content detection
+- **Target Pages**: Choose which pages to process (Activity, Feed, or both)
+
 ### Safety Settings
 - **Max Scroll Attempts**: 50 (prevents infinite scrolling)
 - **Scroll Interval**: 8 seconds between operations
 - **Content Load Wait**: 2 seconds for new content to load
 - **Deletion Timeout**: 5 seconds for deletion confirmation
+- **Pause Between Removals**: 500ms delay between removing items
+
+### Behavior Settings
+- **Auto-start**: Whether to start automatically when pages load
+- **Log Level**: Console logging verbosity (minimal, normal, detailed)
 
 ### Supported URLs
 - `https://myactivity.google.com/product/youtube`
 - `https://www.youtube.com/feed/history`
+
+## 🛡️ Safety Features
+
+- **Overlap Prevention**: Won't start new operations if one is already running
+- **Error Handling**: Graceful handling of network errors and missing elements
+- **Timeout Protection**: Prevents hanging on slow-loading content
+- **Memory Management**: Efficient cleanup of event listeners
+- **Regex Validation**: Real-time validation of regex patterns
+
+## 🔍 Troubleshooting
+
+### Extension Not Working
+1. **Check Console**: Open DevTools (F12) and look for error messages
+2. **Refresh Pages**: Try refreshing the YouTube history pages
+3. **Reinstall Extension**: Remove and reload the extension
+4. **Check Permissions**: Ensure the extension has access to YouTube domains
+
+### No Matching Content Found
+- The extension only removes content that matches your regex pattern
+- Check if your history actually contains content matching your pattern
+- The extension logs all found content in the console
+
+### Slow Performance
+- The extension processes content in batches to avoid overwhelming the page
+- Large history may take time to process completely
+- You can leave it running in the background
+
+## 🤝 Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+### Development Setup
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Test thoroughly
+5. Submit a pull request
 
 ## 📄 License
 
@@ -110,6 +167,13 @@ This project is open source and available under the [MIT License](LICENSE).
 ## ⚠️ Disclaimer
 
 This extension is for personal use to manage your own YouTube history. Please use responsibly and in accordance with YouTube's Terms of Service. The extension only removes content from your own history and does not affect other users.
+
+## 🆘 Support
+
+If you encounter any issues or have questions:
+1. Check the troubleshooting section above
+2. Look at the browser console for error messages
+3. Open an issue on GitHub with detailed information about the problem
 
 ---
 
