@@ -4,7 +4,9 @@
   "version": "1.0",
   "permissions": [
     "scripting",
-    "tabs"
+    "tabs",
+    "storage",
+    "contextMenus"
   ],
   "host_permissions": [
     "https://www.youtube.com/*",
@@ -33,6 +35,17 @@
       ],
       "js": [
         "removeHistoryInFeed.js"
+      ]
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "config.html",
+        "config.js"
+      ],
+      "matches": [
+        "<all_urls>"
       ]
     }
   ]

@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YouTube History Remover - Configuration</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            color: #d32f2f;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            background-color: #fafafa;
+        }
+
+        .section h2 {
+            color: #333;
+            margin-top: 0;
+            border-bottom: 2px solid #d32f2f;
+            padding-bottom: 10px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #555;
+        }
+
+        input[type="text"],
+        input[type="number"],
+        select,
+        textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+            box-sizing: border-box;
+        }
+
+        textarea {
+            height: 80px;
+            font-family: monospace;
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        input[type="checkbox"] {
+            width: auto;
+        }
+
+        .help-text {
+            font-size: 12px;
+            color: #666;
+            margin-top: 5px;
+        }
+
+        .button-group {
+            text-align: center;
+            margin-top: 30px;
+        }
+
+        button {
+            background-color: #d32f2f;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 0 10px;
+        }
+
+        button:hover {
+            background-color: #b71c1c;
+        }
+
+        button.secondary {
+            background-color: #757575;
+        }
+
+        button.secondary:hover {
+            background-color: #616161;
+        }
+
+        .status {
+            text-align: center;
+            margin-top: 20px;
+            padding: 10px;
+            border-radius: 5px;
+            display: none;
+        }
+
+        .status.success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .status.error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .preset-buttons {
+            margin-bottom: 15px;
+        }
+
+        .preset-btn {
+            background-color: #2196F3;
+            color: white;
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-right: 10px;
+            font-size: 12px;
+        }
+
+        .preset-btn:hover {
+            background-color: #1976D2;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>🎯 YouTube History Remover Configuration</h1>
+
+        <div id="status" class="status"></div>
+
+        <form id="configForm">
+            <!-- Content Detection Section -->
+            <div class="section">
+                <h2>🔍 Content Detection</h2>
+
+                <div class="form-group">
+                    <label for="regexPattern">Japanese Character Regex Pattern:</label>
+                    <textarea id="regexPattern"
+                        placeholder="Enter custom regex pattern for Japanese content detection"></textarea>
+                    <div class="help-text">
+                        Default pattern detects Hiragana, Katakana, Kanji, and Japanese punctuation.
+                        <br>Current default: <code>/[\u3000-\u303F\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FBF]/</code>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="targetUrls">Target Pages:</label>
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="activityPage" checked>
+                        <label for="activityPage">YouTube Activity Page (myactivity.google.com)</label>
+                    </div>
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="feedPage" checked>
+                        <label for="feedPage">YouTube Feed History (youtube.com/feed/history)</label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Safety Settings Section -->
+            <div class="section">
+                <h2>🛡️ Safety Settings</h2>
+
+                <div class="form-group">
+                    <label for="maxScrollAttempts">Max Scroll Attempts:</label>
+                    <input type="number" id="maxScrollAttempts" min="10" max="200" value="50">
+                    <div class="help-text">Prevents infinite scrolling. Higher values allow processing more content.
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="scrollInterval">Scroll Interval (seconds):</label>
+                    <input type="number" id="scrollInterval" min="1" max="30" step="0.5" value="8">
+                    <div class="help-text">Time between scroll operations. Lower values = faster processing but higher
+                        resource usage.</div>
+                </div>
+
+                <div class="form-group">
+                    <label for="contentLoadWait">Content Load Wait (seconds):</label>
+                    <input type="number" id="contentLoadWait" min="1" max="10" step="0.5" value="2">
+                    <div class="help-text">Time to wait for new content to load after scrolling.</div>
+                </div>
+
+                <div class="form-group">
+                    <label for="deletionTimeout">Deletion Timeout (seconds):</label>
+                    <input type="number" id="deletionTimeout" min="3" max="15" value="5">
+                    <div class="help-text">Maximum time to wait for deletion confirmation.</div>
+                </div>
+
+                <div class="form-group">
+                    <label for="pauseBetweenRemovals">Pause Between Removals (ms):</label>
+                    <input type="number" id="pauseBetweenRemovals" min="0" max="5000" step="100" value="500">
+                    <div class="help-text">Delay between removing items to avoid rate limiting.</div>
+                </div>
+            </div>
+
+            <!-- Behavior Settings Section -->
+            <div class="section">
+                <h2>⚙️ Behavior Settings</h2>
+
+                <div class="form-group">
+                    <label for="autoStart">Auto-start:</label>
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="autoStart" checked>
+                        <label for="autoStart">Automatically start removal when pages load</label>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="logLevel">Log Level:</label>
+                    <select id="logLevel">
+                        <option value="minimal">Minimal (Errors only)</option>
+                        <option value="normal" selected>Normal (Default)</option>
+                        <option value="detailed">Detailed (All operations)</option>
+                    </select>
+                    <div class="help-text">Controls how much information is logged to the console.</div>
+                </div>
+            </div>
+
+            <div class="button-group">
+                <button type="submit">💾 Save Configuration</button>
+                <button type="button" class="secondary" id="resetButton">🔄 Reset to Defaults</button>
+            </div>
+        </form>
+    </div>
+
+    <script src="config.js"></script>
+</body>
+
+</html>

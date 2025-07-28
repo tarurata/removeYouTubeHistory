@@ -1,8 +1,64 @@
 // Use on this URL: https://www.youtube.com/feed/history
 
+// Configuration management
+let config = {
+    regexPattern: '/[\u3000-\u303F\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FBF]/',
+    safety: {
+        maxScrollAttempts: 50,
+        scrollInterval: 8000,
+        contentLoadWait: 2000,
+        deletionTimeout: 5000,
+        pauseBetweenRemovals: 500
+    },
+    behavior: {
+        autoStart: true,
+        logLevel: 'normal'
+    }
+};
+
 let isScrolling = false;
 let scrollAttempts = 0;
-const maxScrollAttempts = 50; // Prevent infinite scrolling
+let isRunning = false;
+
+// Load configuration from storage
+async function loadConfig() {
+    try {
+        const result = await chrome.storage.sync.get('config');
+        if (result.config) {
+            config = { ...config, ...result.config };
+            // Convert seconds to milliseconds for internal use
+            config.safety.scrollInterval = config.safety.scrollInterval * 1000;
+            config.safety.contentLoadWait = config.safety.contentLoadWait * 1000;
+            config.safety.deletionTimeout = config.safety.deletionTimeout * 1000;
+        }
+        log('Configuration loaded', 'detailed');
+    } catch (error) {
+        log('Error loading configuration, using defaults', 'normal');
+    }
+}
+
+// Logging function with configurable levels
+function log(message, level = 'normal') {
+    const levels = { minimal: 0, normal: 1, detailed: 2 };
+    const currentLevel = levels[config.behavior.logLevel] || 1;
+    const messageLevel = levels[level] || 1;
+
+    if (messageLevel <= currentLevel) {
+        console.log(`[YouTube History Remover] ${message}`);
+    }
+}
+
+// Listen for configuration updates
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+    if (message.action === 'configUpdated') {
+        config = { ...config, ...message.config };
+        // Convert seconds to milliseconds for internal use
+        config.safety.scrollInterval = config.safety.scrollInterval * 1000;
+        config.safety.contentLoadWait = config.safety.contentLoadWait * 1000;
+        config.safety.deletionTimeout = config.safety.deletionTimeout * 1000;
+        log('Configuration updated', 'normal');
+    }
+});
 
 function scrollToBottom() {
     return new Promise((resolve) => {
@@ -17,46 +73,62 @@ function scrollToBottom() {
 
             // If height increased, new content was loaded
             if (newHeight > currentHeight) {
-                console.log("New content loaded, height increased from", currentHeight, "to", newHeight);
+                log(`New content loaded, height increased from ${currentHeight} to ${newHeight}`, 'detailed');
                 scrollAttempts = 0; // Reset attempts since we found new content
             } else {
                 scrollAttempts++;
-                console.log("No new content loaded, attempt", scrollAttempts, "of", maxScrollAttempts);
+                log(`No new content loaded, attempt ${scrollAttempts} of ${config.safety.maxScrollAttempts}`, 'detailed');
             }
 
             resolve();
-        }, 2000); // Wait 2 seconds for content to load
+        }, config.safety.contentLoadWait);
     });
 }
 
 function removeJapaneseVideoHistory() {
     let videos = document.querySelectorAll("ytd-video-renderer");
-    let japaneseRegex = /[\u3000-\u303F\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FBF]/;
+    let japaneseRegex;
+
+    try {
+        // Create regex from config pattern (remove / / delimiters)
+        const pattern = config.regexPattern.slice(1, -1);
+        japaneseRegex = new RegExp(pattern);
+    } catch (error) {
+        log(`Invalid regex pattern: ${error.message}`, 'normal');
+        return 0;
+    }
+
     let removedCount = 0;
 
     videos.forEach(video => {
         let titleElement = video.querySelector("#video-title");
         if (!titleElement) {
-            console.log("Couldn't find title element...");
+            log("Couldn't find title element...", 'detailed');
             return;
         }
 
         let title = titleElement.textContent;
         let videoText = video.textContent;
         if (!japaneseRegex.test(videoText)) {
-            console.log("Could not find Japanese video...");
+            log("Could not find Japanese video...", 'detailed');
             return;
         }
 
-        console.log(`Found Japanese video: ${title}`);
+        log(`Found Japanese video: ${title}`, 'normal');
+
         let removeButton = video.querySelector(".yt-spec-touch-feedback-shape__fill");
 
         if (removeButton) {
             removeButton.click();
-            console.log(`Removed Japanese video: ${title}`);
+            log(`Removed Japanese video: ${title}`, 'normal');
             removedCount++;
+
+            // Pause between removals
+            if (config.safety.pauseBetweenRemovals > 0) {
+                return new Promise(resolve => setTimeout(resolve, config.safety.pauseBetweenRemovals));
+            }
         } else {
-            console.log(`Couldn't find Japanese video: ${title}...`);
+            log(`Couldn't find remove button for: ${title}`, 'normal');
         }
     });
 
@@ -64,8 +136,8 @@ function removeJapaneseVideoHistory() {
 }
 
 async function autoScrollAndRemove() {
-    if (isScrolling) {
-        console.log("Already scrolling, skipping...");
+    if (isScrolling || !isRunning) {
+        log("Already scrolling or not running, skipping...", 'detailed');
         return;
     }
 
@@ -73,44 +145,72 @@ async function autoScrollAndRemove() {
 
     try {
         // First, try to remove any Japanese videos from current view
-        console.log("Checking current view for Japanese videos...");
+        log("Checking current view for Japanese videos...", 'normal');
         const removedCount = removeJapaneseVideoHistory();
 
         if (removedCount > 0) {
-            console.log(`Removed ${removedCount} videos from current view`);
+            log(`Removed ${removedCount} videos from current view`, 'normal');
             // Wait a bit after removing items before scrolling
             await new Promise(resolve => setTimeout(resolve, 3000));
         }
 
         // Check if we should stop scrolling
-        if (scrollAttempts >= maxScrollAttempts) {
-            console.log("Reached maximum scroll attempts, stopping auto-scroll");
+        if (scrollAttempts >= config.safety.maxScrollAttempts) {
+            log("Reached maximum scroll attempts, stopping auto-scroll", 'normal');
             isScrolling = false;
+            isRunning = false;
             return;
         }
 
         // Scroll to load more content
-        console.log("Scrolling to load more content...");
+        log("Scrolling to load more content...", 'normal');
         await scrollToBottom();
 
         // Wait a bit for content to settle
         await new Promise(resolve => setTimeout(resolve, 2000));
 
         // Try to remove videos from newly loaded content
-        console.log("Checking newly loaded content for Japanese videos...");
+        log("Checking newly loaded content for Japanese videos...", 'normal');
         const newRemovedCount = removeJapaneseVideoHistory();
 
         if (newRemovedCount > 0) {
-            console.log(`Removed ${newRemovedCount} videos from newly loaded content`);
+            log(`Removed ${newRemovedCount} videos from newly loaded content`, 'normal');
         }
 
     } catch (error) {
-        console.error("Error during auto-scroll and remove:", error);
+        log(`Error during auto-scroll and remove: ${error.message}`, 'normal');
     } finally {
         isScrolling = false;
     }
 }
 
-// Start the auto-scroll and remove process
-setInterval(autoScrollAndRemove, 8000);
-autoScrollAndRemove();
+// Start the process
+async function startRemoval() {
+    await loadConfig();
+
+    if (config.behavior.autoStart) {
+        isRunning = true;
+        log("Starting automatic Japanese video removal...", 'normal');
+        setInterval(autoScrollAndRemove, config.safety.scrollInterval);
+        autoScrollAndRemove(); // Initial run
+    } else {
+        log("Auto-start disabled. Use context menu or console to start manually.", 'normal');
+    }
+}
+
+// Manual start function
+window.startYouTubeHistoryRemoval = function () {
+    isRunning = true;
+    log("Manual start triggered", 'normal');
+    setInterval(autoScrollAndRemove, config.safety.scrollInterval);
+    autoScrollAndRemove();
+};
+
+// Manual stop function
+window.stopYouTubeHistoryRemoval = function () {
+    isRunning = false;
+    log("Manual stop triggered", 'normal');
+};
+
+// Start the process
+startRemoval();
