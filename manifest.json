@@ -20,12 +20,20 @@
   "action": {},
   "content_scripts": [
     {
-      "matches": ["https://myactivity.google.com/product/youtube"],
-      "js": ["removeHistoryInActivity.js"]
+      "matches": [
+        "https://myactivity.google.com/product/youtube"
+      ],
+      "js": [
+        "removeHistoryInActivity.js"
+      ]
     },
     {
-      "matches": ["https://www.youtube.com/feed/history"],
-      "js": ["removeHistoryInFeed.js"]
+      "matches": [
+        "https://www.youtube.com/feed/history"
+      ],
+      "js": [
+        "removeHistoryInFeed.js"
+      ]
     }
   ]
 }
