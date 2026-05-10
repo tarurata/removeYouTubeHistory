@@ -87,12 +87,27 @@ function scrollToBottom() {
     });
 }
 
-function removeMatchingSearchHistory() {
-    let activityCards = document.querySelectorAll("c-wiz");
+function waitForDeletionConfirmation(element, timeout) {
+    return new Promise((resolve) => {
+        // Watch for the card element to be removed from the DOM
+        const observer = new MutationObserver(() => {
+            if (!document.contains(element)) {
+                observer.disconnect();
+                resolve(true);
+            }
+        });
+        observer.observe(document.body, { childList: true, subtree: true });
+        setTimeout(() => {
+            observer.disconnect();
+            resolve(false);
+        }, timeout);
+    });
+}
+
+async function removeMatchingSearchHistory() {
     let contentRegex;
 
     try {
-        // Create regex from config pattern (remove / / delimiters)
         const pattern = config.regexPattern.slice(1, -1);
         contentRegex = new RegExp(pattern);
     } catch (error) {
@@ -101,17 +116,20 @@ function removeMatchingSearchHistory() {
     }
 
     let removedCount = 0;
+    // Snapshot so DOM mutations during removal don't affect iteration
+    let activityCards = Array.from(document.querySelectorAll("c-wiz"));
 
-    activityCards.forEach(element => {
-        // Check if the card is a YouTube activity card (including the search history)
-        if (!element.firstElementChild.getAttribute("aria-label")) { return; }
-        if (!element.firstElementChild.getAttribute("aria-label").includes("Card showing an activity from YouTube")) { return; }
+    for (const element of activityCards) {
+        // Skip elements already removed from DOM by a previous iteration
+        if (!document.contains(element)) continue;
 
-        let videoText = element.textContent;
-        // Check if the text matches the regex pattern
+        if (!element.firstElementChild || !element.firstElementChild.getAttribute("aria-label")) continue;
+        if (!element.firstElementChild.getAttribute("aria-label").includes("Card showing an activity from YouTube")) continue;
+
+        let videoText = element.textContent.trim();
         if (!contentRegex.test(videoText)) {
             log("Could not find matching content...", 'detailed');
-            return;
+            continue;
         }
 
         log(`Found matching search: ${videoText}`, 'normal');
@@ -120,37 +138,22 @@ function removeMatchingSearchHistory() {
 
         if (removeButton) {
             removeButton.click();
-
-            // Wait for the deletion confirmation text to appear
-            const waitForDeletion = new Promise((resolve) => {
-                const checkDeletion = setInterval(() => {
-                    const deletionText = document.querySelector('div[aria-live="polite"]');
-                    if (deletionText && deletionText.textContent.includes('1 item delete')) {
-                        clearInterval(checkDeletion);
-                        resolve();
-                    }
-                }, 100);
-
-                // Timeout after configured time
-                setTimeout(() => {
-                    clearInterval(checkDeletion);
-                    resolve();
-                }, config.safety.deletionTimeout);
-            });
-
-            waitForDeletion.then(() => {
+            // Wait for the card to actually disappear from the DOM
+            const removed = await waitForDeletionConfirmation(element, config.safety.deletionTimeout);
+            if (removed) {
                 log(`${videoText} Removed!`, 'normal');
                 removedCount++;
-            });
+            } else {
+                log(`Delete timed out for: ${videoText}`, 'normal');
+            }
 
-            // Pause between removals
             if (config.safety.pauseBetweenRemovals > 0) {
-                return new Promise(resolve => setTimeout(resolve, config.safety.pauseBetweenRemovals));
+                await new Promise(resolve => setTimeout(resolve, config.safety.pauseBetweenRemovals));
             }
         } else {
             log(`${videoText} couldn't be removed...`, 'normal');
         }
-    });
+    }
 
     return removedCount;
 }
@@ -164,17 +167,14 @@ async function autoScrollAndRemove() {
     isScrolling = true;
 
     try {
-        // First, try to remove any matching history from current view
         log("Checking current view for matching history...", 'normal');
-        const removedCount = removeMatchingSearchHistory();
+        const removedCount = await removeMatchingSearchHistory();
 
         if (removedCount > 0) {
             log(`Removed ${removedCount} items from current view`, 'normal');
-            // Wait a bit after removing items before scrolling
             await new Promise(resolve => setTimeout(resolve, 3000));
         }
 
-        // Check if we should stop scrolling
         if (scrollAttempts >= config.safety.maxScrollAttempts) {
             log("Reached maximum scroll attempts, stopping auto-scroll", 'normal');
             isScrolling = false;
@@ -182,16 +182,11 @@ async function autoScrollAndRemove() {
             return;
         }
 
-        // Scroll to load more content
         log("Scrolling to load more content...", 'normal');
         await scrollToBottom();
 
-        // Wait a bit for content to settle
-        await new Promise(resolve => setTimeout(resolve, 2000));
-
-        // Try to remove history from newly loaded content
         log("Checking newly loaded content for matching history...", 'normal');
-        const newRemovedCount = removeMatchingSearchHistory();
+        const newRemovedCount = await removeMatchingSearchHistory();
 
         if (newRemovedCount > 0) {
             log(`Removed ${newRemovedCount} items from newly loaded content`, 'normal');

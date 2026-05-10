@@ -85,12 +85,26 @@ function scrollToBottom() {
     });
 }
 
-function removeMatchingVideoHistory() {
-    let videos = document.querySelectorAll("ytd-video-renderer");
+function waitForElementRemoval(element, timeout) {
+    return new Promise((resolve) => {
+        const observer = new MutationObserver(() => {
+            if (!document.contains(element)) {
+                observer.disconnect();
+                resolve(true);
+            }
+        });
+        observer.observe(document.body, { childList: true, subtree: true });
+        setTimeout(() => {
+            observer.disconnect();
+            resolve(false);
+        }, timeout);
+    });
+}
+
+async function removeMatchingVideoHistory() {
     let contentRegex;
 
     try {
-        // Create regex from config pattern (remove / / delimiters)
         const pattern = config.regexPattern.slice(1, -1);
         contentRegex = new RegExp(pattern);
     } catch (error) {
@@ -99,19 +113,24 @@ function removeMatchingVideoHistory() {
     }
 
     let removedCount = 0;
+    // Snapshot the list so mutations during removal don't affect iteration
+    let videos = Array.from(document.querySelectorAll("ytd-video-renderer"));
 
-    videos.forEach(video => {
+    for (const video of videos) {
+        // Skip elements already removed from DOM by a previous iteration
+        if (!document.contains(video)) continue;
+
         let titleElement = video.querySelector("#video-title");
         if (!titleElement) {
             log("Couldn't find title element...", 'detailed');
-            return;
+            continue;
         }
 
-        let title = titleElement.textContent;
+        let title = titleElement.textContent.trim();
         let videoText = video.textContent;
         if (!contentRegex.test(videoText)) {
             log("Could not find matching video...", 'detailed');
-            return;
+            continue;
         }
 
         log(`Found matching video: ${title}`, 'normal');
@@ -120,17 +139,22 @@ function removeMatchingVideoHistory() {
 
         if (removeButton) {
             removeButton.click();
-            log(`Removed matching video: ${title}`, 'normal');
-            removedCount++;
+            // Wait for the element to actually be removed from the DOM
+            const removed = await waitForElementRemoval(video, config.safety.deletionTimeout);
+            if (removed) {
+                log(`Removed matching video: ${title}`, 'normal');
+                removedCount++;
+            } else {
+                log(`Delete timed out for: ${title}`, 'normal');
+            }
 
-            // Pause between removals
             if (config.safety.pauseBetweenRemovals > 0) {
-                return new Promise(resolve => setTimeout(resolve, config.safety.pauseBetweenRemovals));
+                await new Promise(resolve => setTimeout(resolve, config.safety.pauseBetweenRemovals));
             }
         } else {
             log(`Couldn't find remove button for: ${title}`, 'normal');
         }
-    });
+    }
 
     return removedCount;
 }
@@ -144,17 +168,14 @@ async function autoScrollAndRemove() {
     isScrolling = true;
 
     try {
-        // First, try to remove any matching videos from current view
         log("Checking current view for matching videos...", 'normal');
-        const removedCount = removeMatchingVideoHistory();
+        const removedCount = await removeMatchingVideoHistory();
 
         if (removedCount > 0) {
             log(`Removed ${removedCount} videos from current view`, 'normal');
-            // Wait a bit after removing items before scrolling
             await new Promise(resolve => setTimeout(resolve, 3000));
         }
 
-        // Check if we should stop scrolling
         if (scrollAttempts >= config.safety.maxScrollAttempts) {
             log("Reached maximum scroll attempts, stopping auto-scroll", 'normal');
             isScrolling = false;
@@ -162,16 +183,11 @@ async function autoScrollAndRemove() {
             return;
         }
 
-        // Scroll to load more content
         log("Scrolling to load more content...", 'normal');
         await scrollToBottom();
 
-        // Wait a bit for content to settle
-        await new Promise(resolve => setTimeout(resolve, 2000));
-
-        // Try to remove videos from newly loaded content
         log("Checking newly loaded content for matching videos...", 'normal');
-        const newRemovedCount = removeMatchingVideoHistory();
+        const newRemovedCount = await removeMatchingVideoHistory();
 
         if (newRemovedCount > 0) {
             log(`Removed ${newRemovedCount} videos from newly loaded content`, 'normal');
