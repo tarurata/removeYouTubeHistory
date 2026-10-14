@@ -101,6 +101,60 @@ function waitForElementRemoval(element, timeout) {
     });
 }
 
+const REMOVE_LABEL_REGEX = /remove from watch history|watch history|delete|remove|視聴履歴|履歴から削除|削除/i;
+
+function waitFor(getter, timeout = 2000, interval = 50) {
+    return new Promise((resolve) => {
+        const start = Date.now();
+        const tick = () => {
+            const result = getter();
+            if (result) return resolve(result);
+            if (Date.now() - start >= timeout) return resolve(null);
+            setTimeout(tick, interval);
+        };
+        tick();
+    });
+}
+
+function findMenuRemoveItem() {
+    const items = document.querySelectorAll(
+        "ytd-menu-popup-renderer ytd-menu-service-item-renderer, " +
+        "ytd-menu-popup-renderer tp-yt-paper-item, " +
+        "yt-contextual-sheet-layout yt-list-item-view-model, " +
+        "yt-list-item-view-model, [role='menuitem']"
+    );
+    const item = Array.from(items).find(item =>
+        item.offsetParent !== null && REMOVE_LABEL_REGEX.test(item.textContent)
+    );
+    // New-style list items wrap the real <button>; click that
+    return item ? (item.querySelector("button") || item) : null;
+}
+
+// Finds the element to click to remove a history card. Newer YouTube layouts have
+// no direct "X" button, so open the "More actions" menu and pick the remove item.
+async function findRemoveButton(video) {
+    const direct = video.querySelector(
+        "#button[aria-label*='emove' i], button[aria-label*='emove' i], " +
+        "button[aria-label*='削除'], .yt-spec-touch-feedback-shape__fill"
+    );
+    if (direct) return direct;
+
+    const menuButton = video.querySelector(
+        "button[aria-label='More actions'], ytd-menu-renderer button[aria-label], " +
+        "button-view-model button[aria-label], yt-icon-button#button"
+    );
+    if (!menuButton) return null;
+
+    menuButton.click();
+    const item = await waitFor(findMenuRemoveItem);
+    if (!item) {
+        log("Menu opened but no remove item found", 'detailed');
+        // Close the menu so it doesn't block later cards
+        document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    }
+    return item;
+}
+
 async function removeMatchingVideoHistory() {
     let contentRegex;
 
@@ -114,13 +168,13 @@ async function removeMatchingVideoHistory() {
 
     let removedCount = 0;
     // Snapshot the list so mutations during removal don't affect iteration
-    let videos = Array.from(document.querySelectorAll("ytd-video-renderer"));
+    let videos = Array.from(document.querySelectorAll("ytd-video-renderer, yt-lockup-view-model, ytm-shorts-lockup-view-model"));
 
     for (const video of videos) {
         // Skip elements already removed from DOM by a previous iteration
         if (!document.contains(video)) continue;
 
-        let titleElement = video.querySelector("#video-title");
+        let titleElement = video.querySelector("#video-title, h3");
         if (!titleElement) {
             log("Couldn't find title element...", 'detailed');
             continue;
@@ -135,7 +189,7 @@ async function removeMatchingVideoHistory() {
 
         log(`Found matching video: ${title}`, 'normal');
 
-        let removeButton = video.querySelector(".yt-spec-touch-feedback-shape__fill");
+        const removeButton = await findRemoveButton(video);
 
         if (removeButton) {
             removeButton.click();
@@ -207,20 +261,30 @@ async function startRemoval() {
     if (config.behavior.autoStart) {
         isRunning = true;
         log("Starting automatic video removal...", 'normal');
-        setInterval(autoScrollAndRemove, config.safety.scrollInterval);
-        autoScrollAndRemove(); // Initial run
+        window.startYouTubeHistoryRemoval();
     } else {
         log("Auto-start disabled. Use context menu or console to start manually.", 'normal');
     }
 }
 
 // Manual start function
+let intervalId = null;
 window.startYouTubeHistoryRemoval = function () {
     isRunning = true;
+    scrollAttempts = 0;
     log("Manual start triggered", 'normal');
-    setInterval(autoScrollAndRemove, config.safety.scrollInterval);
+    if (intervalId === null) {
+        intervalId = setInterval(autoScrollAndRemove, config.safety.scrollInterval);
+    }
     autoScrollAndRemove();
 };
+
+// Start when the extension icon is clicked
+chrome.runtime.onMessage.addListener((message) => {
+    if (message.action === 'startRemoval') {
+        window.startYouTubeHistoryRemoval();
+    }
+});
 
 // Manual stop function
 window.stopYouTubeHistoryRemoval = function () {

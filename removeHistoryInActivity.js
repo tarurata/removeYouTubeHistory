@@ -206,20 +206,30 @@ async function startRemoval() {
     if (config.behavior.autoStart) {
         isRunning = true;
         log("Starting automatic history removal...", 'normal');
-        setInterval(autoScrollAndRemove, config.safety.scrollInterval);
-        autoScrollAndRemove(); // Initial run
+        window.startYouTubeHistoryRemoval();
     } else {
         log("Auto-start disabled. Use context menu or console to start manually.", 'normal');
     }
 }
 
 // Manual start function
+let intervalId = null;
 window.startYouTubeHistoryRemoval = function () {
     isRunning = true;
+    scrollAttempts = 0;
     log("Manual start triggered", 'normal');
-    setInterval(autoScrollAndRemove, config.safety.scrollInterval);
+    if (intervalId === null) {
+        intervalId = setInterval(autoScrollAndRemove, config.safety.scrollInterval);
+    }
     autoScrollAndRemove();
 };
+
+// Start when the extension icon is clicked
+chrome.runtime.onMessage.addListener((message) => {
+    if (message.action === 'startRemoval') {
+        window.startYouTubeHistoryRemoval();
+    }
+});
 
 // Manual stop function
 window.stopYouTubeHistoryRemoval = function () {

@@ -23,6 +23,17 @@
   "content_scripts": [
     {
       "matches": [
+        "https://www.youtube.com/feed/history",
+        "https://myactivity.google.com/product/youtube"
+      ],
+      "js": [
+        "keepActive.js"
+      ],
+      "run_at": "document_start",
+      "world": "MAIN"
+    },
+    {
+      "matches": [
         "https://myactivity.google.com/product/youtube"
       ],
       "js": [
